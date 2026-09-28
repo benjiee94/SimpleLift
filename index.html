@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SimpleLift</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #111315;
+  color: #ffffff;
+}
+
+header {
+  padding: 24px 20px 14px;
+  background: #181b1e;
+  border-bottom: 1px solid #292d31;
+}
+
+h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.subtitle {
+  color: #9299a1;
+  margin-top: 4px;
+}
+
+.container {
+  padding: 18px;
+  max-width: 600px;
+  margin: auto;
+}
+
+.card {
+  background: #1b1f23;
+  border: 1px solid #292e33;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+input, select {
+  width: 100%;
+  padding: 13px;
+  margin: 6px 0;
+  border-radius: 10px;
+  border: 1px solid #383e45;
+  background: #101214;
+  color: white;
+  font-size: 16px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111315;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.exercise {
+  border-top: 1px solid #30353a;
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+.set-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.small {
+  color: #9299a1;
+  font-size: 13px;
+}
+
+.history {
+  color: #dce0e4;
+  padding: 8px 0;
+  border-bottom: 1px solid #30353a;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>SimpleLift</h1>
+  <div class="subtitle">Simple workout tracking</div>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Today's Workout</h2>
+
+    <input id="exerciseName"
+           placeholder="Exercise e.g. Bench Press">
+
+    <button onclick="addExercise()">
+      + Add Exercise
+    </button>
+  </div>
+
+  <div id="workout"></div>
+
+  <div class="card">
+    <h2>Workout History</h2>
+    <div id="history">
+      <div class="small">Your completed sets will appear here.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+let exercises = [];
+
+function addExercise() {
+
+  const input = document.getElementById("exerciseName");
+  const name = input.value.trim();
+
+  if (!name) {
+    alert("Enter an exercise name.");
+    return;
+  }
+
+  exercises.push({
+    name: name,
+    sets: []
+  });
+
+  input.value = "";
+
+  render();
+}
+
+function addSet(exerciseIndex) {
+
+  const exercise = exercises[exerciseIndex];
+
+  exercise.sets.push({
+    weight: "",
+    reps: ""
+  });
+
+  render();
+}
+
+function updateSet(exerciseIndex, setIndex, field, value) {
+
+  exercises[exerciseIndex].sets[setIndex][field] = value;
+
+  saveData();
+}
+
+function completeWorkout() {
+
+  const history = JSON.parse(
+    localStorage.getItem("simpleLiftHistory") || "[]"
+  );
+
+  history.unshift({
+    date: new Date().toLocaleDateString(),
+    exercises: JSON.parse(JSON.stringify(exercises))
+  });
+
+  localStorage.setItem(
+    "simpleLiftHistory",
+    JSON.stringify(history)
+  );
+
+  exercises = [];
+
+  render();
+
+  alert("Workout saved!");
+}
+
+function saveData() {
+
+  localStorage.setItem(
+    "simpleLiftWorkout",
+    JSON.stringify(exercises)
+  );
+}
+
+function loadData() {
+
+  exercises = JSON.parse(
+    localStorage.getItem("simpleLiftWorkout") || "[]"
+  );
+
+  renderHistory();
+}
+
+function render() {
+
+  const container = document.getElementById("workout");
+
+  container.innerHTML = "";
+
+  exercises.forEach((exercise, i) => {
+
+    const card = document.createElement("div");
+
+    card.className = "card exercise";
+
+    let html = `
+      <h2>${exercise.name}</h2>
+      <div class="small">
+        Weight / Reps
+      </div>
+    `;
+
+    exercise.sets.forEach((set, s) => {
+
+      html += `
+        <div class="set-row">
+
+          <input
+            type="number"
+            placeholder="Weight"
+            value="${set.weight}"
+            onchange="updateSet(${i},${s},'weight',this.value)"
+          >
+
+          <input
+            type="number"
+            placeholder="Reps"
+            value="${set.reps}"
+            onchange="updateSet(${i},${s},'reps',this.value)"
+          >
+
+          <input
+            value="Set ${s + 1}"
+            disabled
+          >
+
+        </div>
+      `;
+
+    });
+
+    html += `
+      <button onclick="addSet(${i})">
+        + Add Set
+      </button>
+    `;
+
+    card.innerHTML = html;
+
+    container.appendChild(card);
+  });
+
+  if (exercises.length > 0) {
+
+    const saveCard = document.createElement("div");
+
+    saveCard.className = "card";
+
+    saveCard.innerHTML = `
+      <button onclick="completeWorkout()">
+        ✓ Complete Workout
+      </button>
+    `;
+
+    container.appendChild(saveCard);
+  }
+
+  saveData();
+  renderHistory();
+}
+
+function renderHistory() {
+
+  const historyBox = document.getElementById("history");
+
+  const history = JSON.parse(
+    localStorage.getItem("simpleLiftHistory") || "[]"
+  );
+
+  if (history.length === 0) {
+
+    historyBox.innerHTML =
+      '<div class="small">No workouts completed yet.</div>';
+
+    return;
+  }
+
+  historyBox.innerHTML = "";
+
+  history.slice(0, 10).forEach(workout => {
+
+    const div = document.createElement("div");
+
+    div.className = "history";
+
+    div.innerHTML = `
+      <strong>${workout.date}</strong><br>
+      <span class="small">
+        ${workout.exercises.length} exercises
+      </span>
+    `;
+
+    historyBox.appendChild(div);
+  });
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>
