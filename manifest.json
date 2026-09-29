@@ -1,0 +1,10 @@
+{
+  "name": "SimpleLift",
+  "short_name": "SimpleLift",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#111315",
+  "theme_color": "#111315",
+  "description": "Simple training. Simple tracking.",
+  "icons": []
+}
