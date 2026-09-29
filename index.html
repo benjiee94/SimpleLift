@@ -705,6 +705,14 @@ renderWeek();
 render();
 
 </script>
-
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js")
+      .then(() => console.log("SimpleLift offline mode enabled"))
+      .catch(error => console.log("Offline mode error:", error));
+  });
+}
+</script>
 </body>
 </html>
